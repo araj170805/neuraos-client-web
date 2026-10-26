@@ -48,7 +48,7 @@ export const listApplicationsResponseSchema = pageOf(applicationSchema);
 export type ListApplicationsResponse = z.infer<typeof listApplicationsResponseSchema>;
 
 /** POST /api/admin/applications/:id/decision: writes the audit log in the same transaction. */
-export const applicationDecisionRequestSchema = decisionSchema(["approved", "rejected", "needs_info"]);
+export const applicationDecisionRequestSchema = decisionSchema(["approved", "rejected", "needs_info"] as const);
 export type ApplicationDecisionRequest = z.infer<typeof applicationDecisionRequestSchema>;
 
 export const applicationDecisionResponseSchema = z.object({ status: applicationStatusSchema });
@@ -86,7 +86,7 @@ export const listContributionsResponseSchema = pageOf(adminContributionSchema);
 export type ListContributionsResponse = z.infer<typeof listContributionsResponseSchema>;
 
 /** POST /api/admin/contributions/:id/decision: writes the audit log in the same transaction. */
-export const contributionDecisionRequestSchema = decisionSchema(["approved", "rejected", "needs_changes"]);
+export const contributionDecisionRequestSchema = decisionSchema(["approved", "rejected", "needs_changes"] as const);
 export type ContributionDecisionRequest = z.infer<typeof contributionDecisionRequestSchema>;
 
 export const contributionDecisionResponseSchema = z.object({ status: reviewableContributionStatusSchema });
