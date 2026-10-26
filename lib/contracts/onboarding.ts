@@ -23,3 +23,21 @@ export const onboardingResponseSchema = z.object({
   referralCode: referralCodeSchema,
 });
 export type OnboardingResponse = z.infer<typeof onboardingResponseSchema>;
+
+/**
+ * PATCH /api/profile: update the signed-in user's name and specialty.
+ * Contract for the profile page's Save button.
+ */
+export const updateProfileRequestSchema = z
+  .object({
+    name: z.string().trim().min(1).max(120).optional(),
+    specialty: z.string().trim().max(80).nullable().optional(),
+  })
+  .refine((data) => data.name !== undefined || data.specialty !== undefined, {
+    message: "Nothing to update",
+  });
+export type UpdateProfileRequest = z.infer<typeof updateProfileRequestSchema>;
+
+export const updateProfileResponseSchema = z.object({ ok: z.literal(true) });
+export type UpdateProfileResponse = z.infer<typeof updateProfileResponseSchema>;
+
