@@ -1,14 +1,16 @@
 import "server-only";
 import { FieldValue, type Timestamp } from "firebase-admin/firestore";
-import { adminDb } from "@/lib/firebase/admin";
+import { adminBucket, adminDb } from "@/lib/firebase/admin";
 import type {
   AdminApplication,
   AdminAuditLog,
   AdminContribution,
+  AdminDownloadUrlResponse,
   AdminUser,
   AppConfig,
   ApplicationDecisionRequest,
   ApplicationDecisionResponse,
+  ApplicationDocumentUrlQuery,
   ContributionDecisionRequest,
   ContributionDecisionResponse,
   ListApplicationsQuery,
@@ -437,3 +439,100 @@ export async function updateAdminConfig(
 
   return { config: updatedConfig };
 }
+
+function parseGcsPath(gcsUri: string): string {
+  const withoutPrefix = gcsUri.replace(/^gs:\/\//, "");
+  const slashIndex = withoutPrefix.indexOf("/");
+  if (slashIndex === -1) {
+    throw new ApiError("INTERNAL", "Invalid GCS URI format.");
+  }
+  return withoutPrefix.slice(slashIndex + 1);
+}
+
+/**
+ * GET /api/admin/applications/:id/document-url
+ *
+ * Generates a short-lived signed download URL for an applicant's verification document.
+ */
+export async function getApplicationDocumentDownloadUrl(
+  id: string,
+  query: ApplicationDocumentUrlQuery,
+): Promise<AdminDownloadUrlResponse> {
+  const db = adminDb();
+  const snap = await db.doc(`verificationApplications/${id}`).get();
+
+  if (!snap.exists) {
+    throw new ApiError("NOT_FOUND", "Verification application not found.");
+  }
+
+  const app = snap.data() as VerificationApplicationDoc;
+  const docs = app.documents ?? [];
+
+  let matched = docs.find((d) => {
+    if (query.kind && d.kind === query.kind) return true;
+    if (query.fileName && d.fileName === query.fileName) return true;
+    return false;
+  });
+
+  if (!matched && docs.length > 0) {
+    matched = docs[0];
+  }
+
+  if (!matched) {
+    throw new ApiError("NOT_FOUND", "Verification document not found.");
+  }
+
+  const objectPath = parseGcsPath(matched.gcsUri);
+  const bucket = adminBucket();
+  const file = bucket.file(objectPath);
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+  const [url] = await file.getSignedUrl({
+    version: "v4",
+    action: "read",
+    expires: expiresAt,
+  });
+
+  return {
+    url,
+    expiresAt: expiresAt.toISOString(),
+  };
+}
+
+/**
+ * GET /api/admin/contributions/:id/audio-url
+ *
+ * Generates a short-lived signed download URL for a voice contribution's audio.
+ */
+export async function getContributionAudioDownloadUrl(
+  id: string,
+): Promise<AdminDownloadUrlResponse> {
+  const db = adminDb();
+  const snap = await db.doc(`contributions/${id}`).get();
+
+  if (!snap.exists) {
+    throw new ApiError("NOT_FOUND", "Contribution not found.");
+  }
+
+  const con = snap.data() as ContributionDoc;
+  if (!con.audio?.gcsUri) {
+    throw new ApiError("NOT_FOUND", "Contribution has no audio recording.");
+  }
+
+  const objectPath = parseGcsPath(con.audio.gcsUri);
+  const bucket = adminBucket();
+  const file = bucket.file(objectPath);
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+  const [url] = await file.getSignedUrl({
+    version: "v4",
+    action: "read",
+    expires: expiresAt,
+  });
+
+  return {
+    url,
+    expiresAt: expiresAt.toISOString(),
+  };
+}
+

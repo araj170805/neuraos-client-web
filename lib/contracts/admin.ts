@@ -156,3 +156,18 @@ export type UpdateConfigRequest = z.infer<typeof updateConfigRequestSchema>;
 
 export const updateConfigResponseSchema = z.object({ config: appConfigSchema });
 export type UpdateConfigResponse = z.infer<typeof updateConfigResponseSchema>;
+
+/* ---------- admin downloads ---------- */
+
+export const applicationDocumentUrlQuerySchema = z.object({
+  kind: verificationDocumentKindSchema.optional(),
+  fileName: z.string().optional(),
+});
+export type ApplicationDocumentUrlQuery = z.infer<typeof applicationDocumentUrlQuerySchema>;
+
+export const adminDownloadUrlResponseSchema = z.object({
+  url: z.url(),
+  expiresAt: isoDateSchema,
+});
+export type AdminDownloadUrlResponse = z.infer<typeof adminDownloadUrlResponseSchema>;
+
