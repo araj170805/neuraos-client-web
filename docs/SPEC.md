@@ -28,10 +28,11 @@ NeuraOS is a medical AI chat for Indian healthcare professionals. Users chat wit
 
 | Person | Track | Owns |
 | --- | --- | --- |
-| Dhruti (lead) | `lead` | API routes, AI pipeline, guardrails, contracts, types, limits, Firebase setup, rules, scripts, `package.json` and `bun.lock`, shared app layouts, CI |
-| Dibyanshu | `chat` | Chat list, chat screen, composer, uploads UI, AI message states, mentions, replies, group modals, join page |
-| Ashish | `platform` | Sign-in and onboarding UI, profile and referrals, verification, contributions, admin panel |
+| Ashish | `chat` | AI chat end to end: chat and message routes, streaming, guardrails, limits, spend shards, chat hooks, chat screens. Also account and admin (live on real data) |
+| Dibyanshu | `files-groups` | Uploads and groups end to end (routes, hooks, upload UI, group dialogs, join page), admin gaps (spend route, `canContribute` route), release readiness |
+| Dhruti (lead) | `lead` | Reviews and merges every PR, end-to-end verification of section 1, deploy |
 
+Split as of 28 Oct 2026; setup, account and admin are done.
 Exact folder ownership and the team workflow live in `AGENTS.md`. Tasks live in `docs/TASKS.md`.
 
 ## 3. Architecture
