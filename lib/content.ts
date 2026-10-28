@@ -17,10 +17,13 @@ export const navLinks = [
   { label: "App", href: `#${sectionIds.app}` },
 ] as const;
 
-/** App calls to action. Nothing has launched yet: each shows a "launching soon" notice. */
+/** The web app; signed-out visitors land on Google sign-in. */
+export const webAppHref = "/chat";
+
+/** App calls to action. Web opens the app; the stores show a "launching soon" notice. */
 export const launchCtas = {
-  nav: { label: "Try it", message: "NeuraOS for web" },
-  hero: { label: "Try it on web", message: "NeuraOS for web" },
+  nav: { label: "Try it" },
+  hero: { label: "Try it on web" },
   appStore: { label: "App Store", message: "NeuraOS for iOS" },
   googlePlay: { label: "Google Play", message: "NeuraOS for Android" },
 } as const;

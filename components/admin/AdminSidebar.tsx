@@ -1,5 +1,6 @@
 import NextLink from "next/link";
 import { AdminNavigator } from "@/components/admin/AdminNavigator";
+import { SignOutButton } from "@/components/app/SignOutButton";
 import { AppBrand } from "@/components/ui/AppBrand";
 import { Avatar } from "@/components/ui/Avatar";
 import { Icon } from "@/components/ui/Icon";
@@ -29,6 +30,7 @@ export function AdminSidebar({ counts, admin }: AdminSidebarProps) {
           <Icon name="arrow-left" size={14} />
           Back to NeuraOS
         </Text>
+        <SignOutButton />
         <div className="flex h-16 items-center gap-3 rounded-full border border-ink/8 bg-paper px-2.5 shadow-card-raised">
           <Avatar name={admin.name} size="lg" tone="dark" />
           <div className="min-w-0">

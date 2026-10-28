@@ -28,6 +28,7 @@ export const icons = {
   "chevron-small": { viewBox: "0 0 10 10", strokeWidth: 1.5, d: "M3 2l3 3-3 3" },
   "arrow-right": { viewBox: "0 0 16 16", strokeWidth: 1.8, d: "M3 8h10M8.5 3.5L13 8l-4.5 4.5" },
   "arrow-left": { viewBox: "0 0 16 16", strokeWidth: 1.6, d: "M13 8H3M7.5 3.5L3 8l4.5 4.5" },
+  "sign-out": { viewBox: "0 0 16 16", strokeWidth: 1.6, d: "M6 2.5H3.5a1 1 0 00-1 1v9a1 1 0 001 1H6M10.5 11L13.5 8l-3-3M13.5 8H6" },
   transition: { viewBox: "0 0 12 12", strokeWidth: 1.5, d: "M2 6h8M7 3l3 3-3 3" },
   external: { viewBox: "0 0 12 12", strokeWidth: 1.6, d: "M4 2h6v6M10 2L2.5 9.5" },
   expand: { viewBox: "0 0 20 20", strokeWidth: 1.8, d: "M12 3h5v5M8 17H3v-5M17 3l-6 6M3 17l6-6" },

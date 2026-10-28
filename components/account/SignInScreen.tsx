@@ -20,8 +20,8 @@ function safeNext(): string {
 }
 
 /**
- * Sign-in card. Signs in with Google, then returns to ?next=. At integration,
- * api.onboarding.complete({ referralCode, termsVersion }) runs right after sign-in.
+ * Sign-in card. Signs in with Google, then returns to ?next=. AuthProvider then
+ * runs onboarding (user doc, referral code, the referral cookie).
  * In UI preview mode sign-in is simulated.
  */
 export function SignInScreen() {

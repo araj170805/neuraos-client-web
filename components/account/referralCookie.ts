@@ -15,3 +15,8 @@ export function readReferralCode(): string | null {
   const parsed = referralCodeSchema.safeParse(match?.[1] ?? "");
   return parsed.success ? parsed.data : null;
 }
+
+/** Drops the code once onboarding has used it. */
+export function clearReferralCode() {
+  document.cookie = `${REFERRAL_COOKIE_NAME}=; Max-Age=0; Path=/; SameSite=Lax`;
+}

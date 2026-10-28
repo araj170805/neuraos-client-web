@@ -2,6 +2,7 @@
 
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, type User } from "firebase/auth";
 import { createContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { onboard } from "@/components/account/onboard";
 import { clientAuth, currentIdToken } from "@/lib/firebase/client";
 import { uiPreview } from "@/lib/firebase/preview";
 
@@ -32,6 +33,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(next);
       setLoading(false);
       if (!next) return setIsAdmin(false);
+      // Retried on the next page load if it fails.
+      onboard(next.uid).catch(() => {});
       next
         .getIdTokenResult()
         .then((result) => setIsAdmin(result.claims.admin === true))

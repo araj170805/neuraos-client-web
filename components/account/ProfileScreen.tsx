@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { TopBar } from "@/components/app/TopBar";
 import { SPECIALTIES } from "@/components/account/options";
@@ -11,7 +12,9 @@ import { FieldRow } from "@/components/ui/FieldRow";
 import { FieldSelectRow } from "@/components/ui/FieldSelectRow";
 import { Panel } from "@/components/ui/Panel";
 import { SectionLabel } from "@/components/ui/SectionLabel";
+import { Icon } from "@/components/ui/Icon";
 import { showToast } from "@/components/ui/toastStore";
+import { useAuth } from "@/hooks/useAuth";
 import type { UserDoc } from "@/lib/types";
 
 /**
@@ -22,10 +25,22 @@ export function ProfileScreen({ user }: { user: UserDoc }) {
   const [saved, setSaved] = useState({ name: user.name, specialty: user.specialty ?? "" });
   const [draft, setDraft] = useState(saved);
   const dirty = draft.name.trim() !== saved.name || draft.specialty !== saved.specialty;
+  const { signOut } = useAuth();
+  const router = useRouter();
 
   return (
     <>
       <TopBar title="Profile" subtitle="Signed in with Google">
+        <Button
+          look="app-light-sm"
+          onClick={async () => {
+            await signOut();
+            router.replace("/");
+          }}
+        >
+          <Icon name="sign-out" size={14} />
+          <span className="max-sm:sr-only">Sign out</span>
+        </Button>
         <Button
           look="app-accent-sm"
           disabled={!dirty || !draft.name.trim()}
