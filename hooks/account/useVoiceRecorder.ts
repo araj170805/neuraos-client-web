@@ -17,21 +17,28 @@ export type VoiceRecorder = {
   error: string | null;
   start: () => Promise<void>;
   stop: () => void;
-  reset: () => void;
 };
 
 function pickMimeType(): string | undefined {
   return ALLOWED_AUDIO_MIME.find((type) => MediaRecorder.isTypeSupported(type));
 }
 
-/** MediaRecorder for "Talk it through": records up to MAX_VOICE_SECONDS, then stops on its own. */
-export function useVoiceRecorder(): VoiceRecorder {
+/**
+ * MediaRecorder for "Talk it through": records up to MAX_VOICE_SECONDS, then stops
+ * on its own. `onStop` gets each finished recording (not discarded ones).
+ */
+export function useVoiceRecorder(onStop?: (recording: Recording) => void): VoiceRecorder {
   const [status, setStatus] = useState<RecorderStatus>("idle");
   const [seconds, setSeconds] = useState(0);
   const [recording, setRecording] = useState<Recording | null>(null);
   const [error, setError] = useState<string | null>(null);
   const recorder = useRef<MediaRecorder | null>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const onStopRef = useRef(onStop);
+
+  useEffect(() => {
+    onStopRef.current = onStop;
+  });
 
   function release() {
     if (timer.current) clearInterval(timer.current);
@@ -41,7 +48,11 @@ export function useVoiceRecorder(): VoiceRecorder {
 
   useEffect(() => {
     return () => {
-      if (recorder.current?.state === "recording") recorder.current.stop();
+      // Leaving the page discards the recording.
+      if (recorder.current?.state === "recording") {
+        recorder.current.onstop = null;
+        recorder.current.stop();
+      }
       release();
     };
   }, []);
@@ -74,8 +85,10 @@ export function useVoiceRecorder(): VoiceRecorder {
     media.onstop = () => {
       release();
       const durationSec = Math.min((Date.now() - startedAt) / 1000, MAX_VOICE_SECONDS);
-      setRecording({ audio: new Blob(chunks, { type: media.mimeType.split(";")[0] }), durationSec });
+      const finished = { audio: new Blob(chunks, { type: media.mimeType.split(";")[0] }), durationSec };
+      setRecording(finished);
       setStatus("stopped");
+      onStopRef.current?.(finished);
     };
 
     recorder.current = media;
@@ -90,15 +103,5 @@ export function useVoiceRecorder(): VoiceRecorder {
     }, 250);
   }
 
-  function reset() {
-    // Discard: stop without producing a recording.
-    if (recorder.current) recorder.current.onstop = release;
-    stop();
-    setStatus("idle");
-    setSeconds(0);
-    setRecording(null);
-    setError(null);
-  }
-
-  return { status, seconds, recording, error, start, stop, reset };
+  return { status, seconds, recording, error, start, stop };
 }

@@ -15,16 +15,22 @@ import { SectionLabel } from "@/components/ui/SectionLabel";
 import { Icon } from "@/components/ui/Icon";
 import { showToast } from "@/components/ui/toastStore";
 import { useAuth } from "@/hooks/useAuth";
+import { errorMessage } from "@/lib/api/client";
+import type { UpdateProfileRequest } from "@/lib/contracts/onboarding";
 import type { UserDoc } from "@/lib/types";
 
-/**
- * Account page (design "Account", assistant mode). Static: Save only updates
- * local state; there is no profile update route in SPEC.md yet.
- */
-export function ProfileScreen({ user }: { user: UserDoc }) {
+type ProfileScreenProps = {
+  user: UserDoc;
+  /** PATCH /api/profile. */
+  onSave: (body: UpdateProfileRequest) => Promise<void>;
+};
+
+/** Account page (design "Account", assistant mode): details, referrals, verification, sign out. */
+export function ProfileScreen({ user, onSave }: ProfileScreenProps) {
   const [saved, setSaved] = useState({ name: user.name, specialty: user.specialty ?? "" });
   const [draft, setDraft] = useState(saved);
   const dirty = draft.name.trim() !== saved.name || draft.specialty !== saved.specialty;
+  const [busy, setBusy] = useState(false);
   const { signOut } = useAuth();
   const router = useRouter();
 
@@ -43,13 +49,22 @@ export function ProfileScreen({ user }: { user: UserDoc }) {
         </Button>
         <Button
           look="app-accent-sm"
-          disabled={!dirty || !draft.name.trim()}
-          onClick={() => {
-            setSaved({ ...draft, name: draft.name.trim() });
-            showToast("Profile saved");
+          disabled={!dirty || !draft.name.trim() || busy}
+          onClick={async () => {
+            const next = { ...draft, name: draft.name.trim() };
+            setBusy(true);
+            try {
+              await onSave({ name: next.name, specialty: next.specialty || null });
+              setSaved(next);
+              showToast("Profile saved");
+            } catch (error) {
+              showToast(errorMessage(error));
+            } finally {
+              setBusy(false);
+            }
           }}
         >
-          Save changes
+          {busy ? "Saving…" : "Save changes"}
         </Button>
       </TopBar>
       <div className="min-h-0 flex-1 overflow-auto px-4 pt-2 pb-14 app:px-6">

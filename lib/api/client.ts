@@ -10,7 +10,7 @@ import * as onboarding from "@/lib/contracts/onboarding";
 import * as verification from "@/lib/contracts/verification";
 import { apiPath as p, apiRequest as call, validate as v } from "./request";
 
-export { ApiError, uploadToTarget } from "./request";
+export { ApiError, errorMessage, uploadToTarget } from "./request";
 
 /**
  * Typed helpers for every API route (SPEC.md section 6). The UI writes only

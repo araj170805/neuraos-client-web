@@ -2,23 +2,25 @@
 
 import { useState } from "react";
 import { TopBar } from "@/components/app/TopBar";
-import { timestampNow } from "@/components/chat/localMessage";
 import { VerificationForm } from "@/components/account/VerificationForm";
 import { VerificationStatusView } from "@/components/account/VerificationStatusView";
 import { Text } from "@/components/ui/Text";
 import { showToast } from "@/components/ui/toastStore";
-import type { VerificationApplicationDoc } from "@/lib/types";
+import type { SubmitVerificationRequest } from "@/lib/contracts/verification";
+import type { VerificationApplicationDoc, VerificationDocument, VerificationDocumentKind } from "@/lib/types";
 
 type VerifyScreenProps = {
   /** Null before the first application. */
   application: VerificationApplicationDoc | null;
   defaults: { fullName: string; specialty: string };
+  upload: (kind: VerificationDocumentKind, file: File) => Promise<VerificationDocument>;
+  /** POST /api/verification; the live application then shows the new status. */
+  onSubmit: (request: SubmitVerificationRequest) => Promise<void>;
 };
 
-/** Apply, see where the application stands, or resubmit after "needs info". Static: submit updates local state. */
-export function VerifyScreen({ application: initial, defaults }: VerifyScreenProps) {
-  const [application, setApplication] = useState(initial);
-  const [editing, setEditing] = useState(initial === null);
+/** Apply, see where the application stands, or resubmit after "needs info". */
+export function VerifyScreen({ application, defaults, upload, onSubmit }: VerifyScreenProps) {
+  const [editing, setEditing] = useState(application === null);
 
   return (
     <>
@@ -42,16 +44,9 @@ export function VerifyScreen({ application: initial, defaults }: VerifyScreenPro
                   councilName: application?.councilName ?? "",
                   registrationYear: application ? String(application.registrationYear) : "",
                 }}
-                onSubmit={(request) => {
-                  setApplication({
-                    uid: application?.uid ?? "me",
-                    ...request,
-                    status: "pending",
-                    reviewerUid: null,
-                    reviewNote: null,
-                    submittedAt: timestampNow(),
-                    reviewedAt: null,
-                  });
+                upload={upload}
+                onSubmit={async (request) => {
+                  await onSubmit(request);
                   setEditing(false);
                   showToast("Application submitted");
                 }}

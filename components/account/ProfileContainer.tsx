@@ -1,9 +1,14 @@
 "use client";
 
 import { ProfileScreen } from "@/components/account/ProfileScreen";
-import { signedInUser } from "@/lib/fixtures/users";
+import { PageStatus } from "@/components/app/PageStatus";
+import { useProfile } from "@/hooks/account/useProfile";
 
-/** Client side of /profile. Static: the fixture user. At integration: useProfile(). */
+/** Client side of /profile: the live user doc. */
 export function ProfileContainer() {
-  return <ProfileScreen user={signedInUser} />;
+  const profile = useProfile();
+  if (!profile.data) {
+    return <PageStatus error={profile.error} label={profile.loading ? "Loading…" : "Setting up your account…"} />;
+  }
+  return <ProfileScreen user={profile.data} onSave={profile.save} />;
 }

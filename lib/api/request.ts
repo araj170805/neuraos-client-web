@@ -17,6 +17,11 @@ export class ApiError extends Error {
   }
 }
 
+/** A message to show the user for any thrown error (API errors carry their own). */
+export function errorMessage(error: unknown): string {
+  return error instanceof ApiError ? error.message : "Something went wrong. Please try again.";
+}
+
 type Method = "GET" | "POST" | "PATCH" | "DELETE";
 
 type Query = Record<string, string | number | undefined>;

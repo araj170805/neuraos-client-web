@@ -1,29 +1,8 @@
-import type { ContributionDoc, UsageDoc, VerificationApplicationDoc, WithId } from "@/lib/types";
+import type { ContributionDoc, UsageDoc, WithId } from "@/lib/types";
 import { at } from "./time";
 import { fixtureUids as u } from "./users";
 
 /** The signed-in doctor's own docs (what profile, verify and contribute read). Fictional. */
-
-export const myApplication: WithId<VerificationApplicationDoc> = {
-  id: "app_aarav",
-  uid: u.doctor,
-  fullName: "Dr. Aarav Mehta",
-  phone: "+91 90000 00001",
-  specialty: "Cardiology",
-  institution: "St. Mary's General Hospital",
-  registrationNumber: "MMC-2011-000000",
-  councilName: "Maharashtra Medical Council",
-  registrationYear: 2011,
-  documents: [
-    { fileName: "registration.pdf", gcsUri: "gs://neuraos-fixtures/verification/u_aarav/registration.pdf", kind: "registration_certificate" },
-    { fileName: "id_front.jpg", gcsUri: "gs://neuraos-fixtures/verification/u_aarav/id_front.jpg", kind: "id_proof" },
-  ],
-  status: "approved",
-  reviewerUid: u.admin,
-  reviewNote: null,
-  submittedAt: at("2026-10-24T11:00:00+05:30"),
-  reviewedAt: at("2026-10-24T16:20:00+05:30"),
-};
 
 function contribution(id: string, doc: Partial<ContributionDoc> & Pick<ContributionDoc, "title" | "type" | "status">): WithId<ContributionDoc> {
   return {

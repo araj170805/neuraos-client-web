@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { COUNCILS, SPECIALTIES } from "@/components/account/options";
 import { UploadTile } from "@/components/account/UploadTile";
 import type { FileChipStatus } from "@/components/chat/FileChip";
@@ -12,15 +12,17 @@ import { Notice } from "@/components/ui/Notice";
 import { Panel } from "@/components/ui/Panel";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { Text } from "@/components/ui/Text";
+import { errorMessage } from "@/lib/api/client";
 import { submitVerificationRequestSchema, type SubmitVerificationRequest } from "@/lib/contracts/verification";
-import type { VerificationDocumentKind } from "@/lib/types";
+import type { VerificationDocument, VerificationDocumentKind } from "@/lib/types";
 
 type Fields = Omit<SubmitVerificationRequest, "documents" | "registrationYear"> & { registrationYear: string };
-type Doc = { name: string; status: FileChipStatus };
+type Doc = { name: string; status: FileChipStatus; uploaded: VerificationDocument | null };
 
 type VerificationFormProps = {
   initial: Fields;
-  onSubmit: (request: SubmitVerificationRequest) => void;
+  upload: (kind: VerificationDocumentKind, file: File) => Promise<VerificationDocument>;
+  onSubmit: (request: SubmitVerificationRequest) => Promise<void>;
   submitLabel: string;
 };
 
@@ -30,37 +32,32 @@ const docs: { kind: VerificationDocumentKind; label: string; hint: string }[] = 
 ];
 
 /**
- * Doctor verification application. Validated with the API's own zod schema.
- * Static: uploads finish after a short delay; at integration they use
- * api.verification.uploadUrl + uploadToTarget.
+ * Doctor verification application. Validated with the API's own zod schema;
+ * each document uploads as soon as it's picked (signed URL, then PUT).
  */
-export function VerificationForm({ initial, onSubmit, submitLabel }: VerificationFormProps) {
+export function VerificationForm({ initial, upload, onSubmit, submitLabel }: VerificationFormProps) {
   const [fields, setFields] = useState(initial);
   const [files, setFiles] = useState<Partial<Record<VerificationDocumentKind, Doc>>>({});
   const [consent, setConsent] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-
-  useEffect(() => {
-    const pending = timers.current;
-    return () => pending.forEach(clearTimeout);
-  }, []);
+  const [busy, setBusy] = useState(false);
 
   const set = (key: keyof Fields) => (event: { target: { value: string } }) =>
     setFields((f) => ({ ...f, [key]: event.target.value }));
 
-  function pick(kind: VerificationDocumentKind, file: File) {
-    setFiles((f) => ({ ...f, [kind]: { name: file.name, status: "uploading" } }));
-    timers.current.push(
-      setTimeout(() => setFiles((f) => (f[kind] ? { ...f, [kind]: { ...f[kind], status: "ready" } } : f)), 1400),
-    );
+  async function pick(kind: VerificationDocumentKind, file: File) {
+    setFiles((f) => ({ ...f, [kind]: { name: file.name, status: "uploading", uploaded: null } }));
+    const finish = (next: Doc) => setFiles((f) => (f[kind]?.name === file.name ? { ...f, [kind]: next } : f));
+    try {
+      finish({ name: file.name, status: "ready", uploaded: await upload(kind, file) });
+    } catch (error) {
+      finish({ name: file.name, status: "failed", uploaded: null });
+      setErrors([errorMessage(error)]);
+    }
   }
 
-  function submit() {
-    const documents = docs.flatMap(({ kind }) => {
-      const doc = files[kind];
-      return doc?.status === "ready" ? [{ kind, fileName: doc.name, gcsUri: `gs://static/verification/${doc.name}` }] : [];
-    });
+  async function submit() {
+    const documents = docs.flatMap(({ kind }) => files[kind]?.uploaded ?? []);
     const result = submitVerificationRequestSchema.safeParse({
       ...fields,
       registrationYear: Number(fields.registrationYear),
@@ -69,7 +66,15 @@ export function VerificationForm({ initial, onSubmit, submitLabel }: Verificatio
     const problems = result.success ? [] : [...new Set(result.error.issues.map((i) => describe(i.path[0], i.message)))];
     if (!consent) problems.push("Confirm that the details are yours and accurate.");
     setErrors(problems);
-    if (result.success && consent) onSubmit(result.data);
+    if (!result.success || !consent) return;
+    setBusy(true);
+    try {
+      await onSubmit(result.data);
+    } catch (error) {
+      setErrors([errorMessage(error)]);
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -145,8 +150,8 @@ export function VerificationForm({ initial, onSubmit, submitLabel }: Verificatio
         </div>
       )}
 
-      <Button look="app-accent-lg" type="submit" className="self-end">
-        {submitLabel}
+      <Button look="app-accent-lg" type="submit" className="self-end" disabled={busy}>
+        {busy ? "Submitting…" : submitLabel}
       </Button>
     </form>
   );
