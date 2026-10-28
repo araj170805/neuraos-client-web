@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { TopBar } from "@/components/app/TopBar";
 import { PiiText } from "@/components/account/PiiText";
 import { contributionReviewPill, isoDay } from "@/components/admin/adminLabels";
@@ -17,7 +16,8 @@ import { SectionLabel } from "@/components/ui/SectionLabel";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { Text } from "@/components/ui/Text";
 import { showToast } from "@/components/ui/toastStore";
-import type { AdminContribution, AdminUser } from "@/lib/contracts/admin";
+import { errorMessage } from "@/lib/api/client";
+import type { AdminContribution, AdminUser, ContributionDecisionRequest } from "@/lib/contracts/admin";
 
 type ContributionReviewProps = {
   contribution: AdminContribution;
@@ -25,11 +25,14 @@ type ContributionReviewProps = {
   registration: string | null;
   history: AdminContribution[];
   reviewer: string;
+  /** POST /api/admin/contributions/:id/decision. */
+  onDecide: (body: ContributionDecisionRequest) => Promise<void>;
+  /** Signed URL for the voice recording. */
+  audioUrl: () => Promise<string>;
 };
 
-/** Case-study review (design "Contribution review"). Static: local decision; at integration api.admin.decideContribution. */
-export function ContributionReview({ contribution: initial, contributor, registration, history, reviewer }: ContributionReviewProps) {
-  const [c, setC] = useState(initial);
+/** Case-study review (design "Contribution review"): the case, PII flags, contributor and the decision. */
+export function ContributionReview({ contribution: c, contributor, registration, history, reviewer, onDecide, audioUrl }: ContributionReviewProps) {
   const pill = contributionReviewPill[c.status];
   const flags = c.piiCheck?.flags ?? [];
   const code = c.id.toUpperCase();
@@ -60,7 +63,7 @@ export function ContributionReview({ contribution: initial, contributor, registr
               </Text>
             </Panel>
 
-            {c.audio && <VoicePlayer id={c.id} seconds={c.audio.durationSec} />}
+            {c.audio && <VoicePlayer id={c.id} seconds={c.audio.durationSec} loadUrl={audioUrl} />}
 
             <section aria-labelledby="submitted-text">
               <SectionLabel
@@ -89,10 +92,14 @@ export function ContributionReview({ contribution: initial, contributor, registr
                 kind="contribution"
                 subject={code}
                 person={c.contributorName}
-                onDecide={(status, note) => {
+                onDecide={async (status, note) => {
                   if (status === "needs_info") return;
-                  setC({ ...c, status, reviewNote: note, reviewedAt: new Date().toISOString() });
-                  showToast(`${code}: ${contributionReviewPill[status].label}`);
+                  try {
+                    await onDecide({ decision: status, note });
+                    showToast(`${code}: ${contributionReviewPill[status].label}`);
+                  } catch (error) {
+                    showToast(errorMessage(error));
+                  }
                 }}
               />
             ) : (

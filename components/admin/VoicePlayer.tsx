@@ -1,11 +1,13 @@
 "use client";
 
 import { clsx } from "clsx";
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { duration } from "@/components/account/dates";
 import { Icon } from "@/components/ui/Icon";
 import { Panel } from "@/components/ui/Panel";
 import { Text } from "@/components/ui/Text";
+import { showToast } from "@/components/ui/toastStore";
+import { errorMessage } from "@/lib/api/client";
 
 const BARS = 64;
 
@@ -21,37 +23,59 @@ function waveform(seed: string): number[] {
   });
 }
 
-/**
- * Voice note player (design): play / pause, waveform progress, click to seek.
- * Static: plays a timer only; at integration an <audio> element on a signed URL.
- */
-export function VoicePlayer({ id, seconds }: { id: string; seconds: number }) {
+type VoicePlayerProps = {
+  /** Seeds the waveform. */
+  id: string;
+  seconds: number;
+  /** Signed URL for the recording, fetched on first play. */
+  loadUrl: () => Promise<string>;
+};
+
+/** Voice note player (design): play / pause, waveform progress, click to seek, on an <audio> element. */
+export function VoicePlayer({ id, seconds, loadUrl }: VoicePlayerProps) {
+  const audio = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [position, setPosition] = useState(0);
   const bars = waveform(id);
 
-  useEffect(() => {
-    if (!playing) return;
-    const timer = setInterval(() => {
-      setPosition((p) => {
-        if (p + 1 >= seconds) {
-          setPlaying(false);
-          return seconds;
-        }
-        return p + 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [playing, seconds]);
+  async function toggle() {
+    const el = audio.current;
+    if (!el) return;
+    if (playing) return el.pause();
+    try {
+      if (!el.src) {
+        setLoading(true);
+        el.src = await loadUrl();
+      }
+      await el.play();
+    } catch (error) {
+      showToast(errorMessage(error));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function seek(to: number) {
+    const next = Math.max(0, Math.min(seconds, to));
+    setPosition(next);
+    if (audio.current?.src) audio.current.currentTime = next;
+  }
 
   return (
     <Panel size="lg" className="flex items-center gap-4 py-4 pr-5 pl-4">
+      <audio
+        ref={audio}
+        preload="none"
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onTimeUpdate={(event) => setPosition(event.currentTarget.currentTime)}
+        onEnded={() => setPosition(seconds)}
+      />
       <button
         type="button"
-        onClick={() => {
-          if (position >= seconds) setPosition(0);
-          setPlaying((p) => !p);
-        }}
+        onClick={toggle}
+        disabled={loading}
         aria-label={playing ? "Pause" : "Play"}
         className="flex size-13 shrink-0 cursor-pointer items-center justify-center rounded-full bg-linear-to-b from-accent-hi to-accent text-paper shadow-key-accent-dialog active:translate-y-0.5"
       >
@@ -64,15 +88,15 @@ export function VoicePlayer({ id, seconds }: { id: string; seconds: number }) {
           aria-label="Position"
           aria-valuemin={0}
           aria-valuemax={seconds}
-          aria-valuenow={position}
+          aria-valuenow={Math.round(position)}
           aria-valuetext={duration(position)}
           onClick={(event) => {
             const box = event.currentTarget.getBoundingClientRect();
-            setPosition(Math.round(((event.clientX - box.left) / box.width) * seconds));
+            seek(((event.clientX - box.left) / box.width) * seconds);
           }}
           onKeyDown={(event) => {
-            if (event.key === "ArrowRight") setPosition((p) => Math.min(seconds, p + 5));
-            if (event.key === "ArrowLeft") setPosition((p) => Math.max(0, p - 5));
+            if (event.key === "ArrowRight") seek(position + 5);
+            if (event.key === "ArrowLeft") seek(position - 5);
           }}
           className="flex h-11 cursor-pointer items-center gap-0.5"
         >

@@ -41,7 +41,7 @@ Run the static pages with `NEXT_PUBLIC_UI_PREVIEW=true` in `.env.local` (dev onl
 - [x] **A1** `hooks/admin`: `useApplications`, `useAdminContributions`, `useAdminUsers`, `useAuditLogs`, `useConfig` (lists load every status through the API; a decision refetches all of them)
 - [x] Shared listeners `hooks/firestore/useDocument` and `useCollection` (chat hooks should use these)
 - [x] Sign-in flow: landing "Try it" opens the app, onboarding after sign-in, sign-out (profile, admin sidebar)
-- [ ] **I-account+admin** (taken over from Ashish) Integrate profile, verify, contribute and admin pages with the A1 hooks
+- [x] **I-account+admin** (taken over from Ashish) Profile, verify, contribute (real uploads, voice, PII check) and admin pages on the A1 hooks. Gaps: no route for today's spend (shows "—"), referral names and the per-user contribute switch (read-only, follows verification)
 - [ ] **R** Review all server code (Ashish's merged routes now; C1–C3 as PRs land), test each against the real project
 - [ ] Final local test (SPEC.md section 1 and 16), deploy (`docs/SETUP.md`), live test
 

@@ -9,18 +9,16 @@ import { Text } from "@/components/ui/Text";
 type DocumentCardProps = {
   title: string;
   meta: string;
-  /** Extra top padding so short documents sit centred. */
-  offset?: boolean;
   onOpen: () => void;
   children: ReactNode;
 };
 
 /** Document thumbnail with zoom and "open full". */
-export function DocumentCard({ title, meta, offset = false, onOpen, children }: DocumentCardProps) {
+export function DocumentCard({ title, meta, onOpen, children }: DocumentCardProps) {
   const [zoom, setZoom] = useState(1);
   return (
     <Panel className="overflow-hidden">
-      <div className={offset ? "h-72.5 overflow-auto bg-track px-5 pt-14 pb-5 inset-shadow-track" : "h-72.5 overflow-auto bg-track p-5 inset-shadow-track"}>
+      <div className="h-72.5 overflow-auto bg-track p-5 inset-shadow-track">
         <div className="mx-auto w-fit" style={{ zoom }}>
           {children}
         </div>
@@ -28,7 +26,7 @@ export function DocumentCard({ title, meta, offset = false, onOpen, children }: 
       <div className="flex items-center gap-2 border-t border-ink/7 py-3 pr-3 pl-4">
         <div className="min-w-0 flex-1">
           <Text variant="button-sm">{title}</Text>
-          <Text variant="mono-meta" className="mt-0.5 text-muted">
+          <Text variant="mono-meta" className="mt-0.5 truncate text-muted">
             {meta}
           </Text>
         </div>

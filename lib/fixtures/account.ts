@@ -1,8 +1,8 @@
-import type { ContributionDoc, UsageDoc, WithId } from "@/lib/types";
+import type { ContributionDoc, WithId } from "@/lib/types";
 import { at } from "./time";
 import { fixtureUids as u } from "./users";
 
-/** The signed-in doctor's own docs (what profile, verify and contribute read). Fictional. */
+/** The sample doctor's case studies (sidebar in UI preview). Fictional. */
 
 function contribution(id: string, doc: Partial<ContributionDoc> & Pick<ContributionDoc, "title" | "type" | "status">): WithId<ContributionDoc> {
   return {
@@ -70,10 +70,3 @@ export const myContributions: WithId<ContributionDoc>[] = [
     reviewedAt: at("2026-10-25T08:30:00+05:30"),
   }),
 ];
-
-export const myUsageToday: UsageDoc = {
-  aiReplies: 7,
-  contributions: 1,
-  minuteWindowStart: at("2026-10-25T09:42:00+05:30"),
-  minuteCount: 2,
-};

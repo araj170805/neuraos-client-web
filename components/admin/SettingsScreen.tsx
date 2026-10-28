@@ -12,7 +12,8 @@ import { Text } from "@/components/ui/Text";
 import { TextInput } from "@/components/ui/TextInput";
 import { showToast } from "@/components/ui/toastStore";
 import { Toggle } from "@/components/ui/Toggle";
-import { appConfigSchema, type AppConfig } from "@/lib/contracts/admin";
+import { errorMessage } from "@/lib/api/client";
+import { appConfigSchema, type AppConfig, type UpdateConfigRequest } from "@/lib/contracts/admin";
 
 type Feature = "aiEnabled" | "groupsEnabled" | "contributionsEnabled";
 
@@ -22,9 +23,18 @@ const features: { key: Feature; title: string; description: string }[] = [
   { key: "contributionsEnabled", title: "Contributions enabled", description: "Doctors can submit case studies for training." },
 ];
 
-/** Feature switches and the daily spend cap (design "Admin — Settings"). Static: Save keeps local state; at integration api.admin.updateConfig. */
-export function SettingsScreen({ config, spendToday }: { config: AppConfig; spendToday: number }) {
+type SettingsScreenProps = {
+  config: AppConfig;
+  /** Null until there's a spend route. */
+  spendToday: number | null;
+  /** PATCH /api/admin/config. */
+  onSave: (body: UpdateConfigRequest) => Promise<void>;
+};
+
+/** Feature switches and the daily spend cap (design "Admin — Settings"). */
+export function SettingsScreen({ config, spendToday, onSave }: SettingsScreenProps) {
   const [saved, setSaved] = useState(config);
+  const [busy, setBusy] = useState(false);
   const [draft, setDraft] = useState({ ...config, cap: String(config.dailySpendCapUsd) });
   const capId = useId();
 
@@ -38,20 +48,28 @@ export function SettingsScreen({ config, spendToday }: { config: AppConfig; spen
   const dirty =
     features.some((f) => draft[f.key] !== saved[f.key]) || next.dailySpendCapUsd !== saved.dailySpendCapUsd;
   const cap = valid ? next.dailySpendCapUsd : saved.dailySpendCapUsd;
-  const share = cap > 0 ? spendToday / cap : 1;
+  const share = spendToday === null ? 0 : cap > 0 ? spendToday / cap : 1;
 
   return (
     <>
       <TopBar title="Settings" subtitle="App switches and AI budget">
         <Button
           look="app-accent-sm"
-          disabled={!dirty || !valid}
-          onClick={() => {
-            setSaved(next);
-            showToast("Settings saved");
+          disabled={!dirty || !valid || busy}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              await onSave(next);
+              setSaved(next);
+              showToast("Settings saved");
+            } catch (error) {
+              showToast(errorMessage(error));
+            } finally {
+              setBusy(false);
+            }
           }}
         >
-          Save changes
+          {busy ? "Saving…" : "Save changes"}
         </Button>
       </TopBar>
       <div className="min-h-0 flex-1 overflow-auto px-4 pt-2 pb-14 app:px-7">
@@ -108,7 +126,7 @@ export function SettingsScreen({ config, spendToday }: { config: AppConfig; spen
                       Today&apos;s spend
                     </Text>
                     <Text as="span" variant="mono-sm" className="text-ink-soft">
-                      {money(spendToday)} of {money(cap)}
+                      {spendToday === null ? "—" : money(spendToday)} of {money(cap)}
                     </Text>
                   </div>
                   <Meter value={share} label="Today's AI spend against the cap" />
@@ -117,7 +135,11 @@ export function SettingsScreen({ config, spendToday }: { config: AppConfig; spen
                     variant="mono-sm"
                     className={clsx(share >= 1 ? "text-danger-text" : share >= 0.8 ? "text-amber-text" : "text-muted")}
                   >
-                    {share >= 1 ? "Cap reached · AI replies paused until midnight IST" : `${Math.round(share * 100)}% used · resets at midnight IST`}
+                    {spendToday === null
+                      ? "Spend tracking isn't shown yet · resets at midnight IST"
+                      : share >= 1
+                        ? "Cap reached · AI replies paused until midnight IST"
+                        : `${Math.round(share * 100)}% used · resets at midnight IST`}
                   </Text>
                 </div>
               </Panel>

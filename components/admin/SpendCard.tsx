@@ -3,9 +3,9 @@ import { money } from "@/components/admin/adminLabels";
 import { Meter } from "@/components/ui/Meter";
 import { Text } from "@/components/ui/Text";
 
-/** Dark overview tile: today's AI spend against the daily cap; opens Settings. */
-export function SpendCard({ spend, cap }: { spend: number; cap: number }) {
-  const share = cap > 0 ? spend / cap : 1;
+/** Dark overview tile: today's AI spend against the daily cap; opens Settings. `spend` is null until there's a spend route. */
+export function SpendCard({ spend, cap }: { spend: number | null; cap: number }) {
+  const share = spend === null ? 0 : cap > 0 ? spend / cap : 1;
   return (
     <NextLink
       href="/admin/settings"
@@ -16,7 +16,7 @@ export function SpendCard({ spend, cap }: { spend: number; cap: number }) {
       </Text>
       <span className="flex flex-wrap items-baseline gap-2">
         <Text as="span" variant="stat">
-          {money(spend)}
+          {spend === null ? "—" : money(spend)}
         </Text>
         <Text as="span" variant="caption" className="text-on-dark-muted">
           of {money(cap)}
@@ -25,7 +25,11 @@ export function SpendCard({ spend, cap }: { spend: number; cap: number }) {
       <span className="mt-auto flex w-full flex-col gap-2">
         <Meter value={share} label="Today's AI spend against the daily cap" theme="dark" />
         <Text as="span" variant="mono-meta" className="text-on-dark-muted">
-          {share >= 1 ? "Cap reached · AI replies paused until midnight IST" : `${Math.round(share * 100)}% used · resets at midnight IST`}
+          {spend === null
+            ? "Spend tracking isn't shown yet · resets at midnight IST"
+            : share >= 1
+              ? "Cap reached · AI replies paused until midnight IST"
+              : `${Math.round(share * 100)}% used · resets at midnight IST`}
         </Text>
       </span>
     </NextLink>

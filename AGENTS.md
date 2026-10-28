@@ -57,7 +57,7 @@ Split (from 28 Oct): Dhruti does setup, account/admin hooks (A1), review and rel
 - Throw `ApiError` from `lib/server/http/errors.ts` for expected failures; the wrapper sends `{ error: { code, message } }` with the right status.
 - Hooks return data typed with `lib/types.ts` and `lib/contracts`; UI components take those same types as props. This is how the UI and backend meet at integration.
 - Hooks read Firestore with `lib/firebase/client.ts` and never write to it; writes go through `lib/api/client.ts`. The user comes from `useAuth()`.
-- Static pages read `lib/fixtures/`; set `NEXT_PUBLIC_UI_PREVIEW=true` in `.env.local` to open them without sign-in (dev only). `docs/TASKS.md` maps each hook to the UI props it must feed.
+- Pages read data in a small client container (`*Container.tsx`) that calls the hooks and passes their results to the screen. Account and admin pages are live; chat and join pages still read `lib/fixtures/` (open them without sign-in with `NEXT_PUBLIC_UI_PREVIEW=true`, dev only) until their hooks land. `docs/TASKS.md` maps each hook to the UI props it must feed.
 - Need a package? Ask Dhruti.
 - Never commit .env files or keys.
 - Fictional data only (seeds, fixtures, tests), never real patient details. Never log message text, transcripts, file contents or contribution text.

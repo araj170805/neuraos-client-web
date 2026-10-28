@@ -43,7 +43,7 @@ cp .env.example .env.local     # values come from Dhruti
 bun run dev
 ```
 
-No backend yet? Add `NEXT_PUBLIC_UI_PREVIEW=true` to `.env.local` (dev only): every page renders with fixture data and no sign-in.
+Profile, verification, case studies and admin run on real data. Chat and join pages still use fixture data until the chat backend lands; `NEXT_PUBLIC_UI_PREVIEW=true` in `.env.local` (dev only) opens those without sign-in.
 
 | Command | |
 | --- | --- |

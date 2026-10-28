@@ -3,14 +3,13 @@
 import { useState } from "react";
 import { TopBar } from "@/components/app/TopBar";
 import { applicationPill, isoDayTime } from "@/components/admin/adminLabels";
-import { CertificatePreview } from "@/components/admin/CertificatePreview";
 import { DecidedPanel } from "@/components/admin/DecidedPanel";
 import { DecisionPanel } from "@/components/admin/DecisionPanel";
 import { DocumentCard } from "@/components/admin/DocumentCard";
 import { DocumentLightbox } from "@/components/admin/DocumentLightbox";
 import { HistoryPanel } from "@/components/admin/HistoryPanel";
-import { IdCardPreview } from "@/components/admin/IdCardPreview";
 import { reviewHistory } from "@/components/admin/reviewHistory";
+import { SignedDocument } from "@/components/admin/SignedDocument";
 import { Avatar } from "@/components/ui/Avatar";
 import { KeyValueList } from "@/components/ui/KeyValueList";
 import { Panel } from "@/components/ui/Panel";
@@ -18,24 +17,34 @@ import { SectionLabel } from "@/components/ui/SectionLabel";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { Text } from "@/components/ui/Text";
 import { showToast } from "@/components/ui/toastStore";
-import type { AdminApplication } from "@/lib/contracts/admin";
+import { errorMessage } from "@/lib/api/client";
+import type { AdminApplication, ApplicationDecisionRequest } from "@/lib/contracts/admin";
+import type { VerificationDocumentKind } from "@/lib/types";
 
-type ApplicationReviewProps = { application: AdminApplication; email: string; reviewer: string };
+type Doc = { kind: VerificationDocumentKind; fileName: string };
 
-/**
- * Doctor verification review (design "Application review"). Static: the decision
- * updates local state; at integration api.admin.decideApplication.
- */
-export function ApplicationReview({ application: initial, email, reviewer }: ApplicationReviewProps) {
-  const [a, setA] = useState(initial);
-  const [viewer, setViewer] = useState<"cert" | "id" | null>(null);
+type ApplicationReviewProps = {
+  application: AdminApplication;
+  email: string;
+  reviewer: string;
+  /** POST /api/admin/applications/:id/decision. */
+  onDecide: (body: ApplicationDecisionRequest) => Promise<void>;
+  /** Signed URL for one of the applicant's documents. */
+  documentUrl: (doc: Doc) => Promise<string>;
+};
+
+const kindLabel: Record<VerificationDocumentKind, string> = {
+  registration_certificate: "Registration certificate",
+  id_proof: "ID proof",
+};
+
+const fileType = (name: string) => name.split(".").pop()?.toUpperCase() ?? "File";
+
+/** Doctor verification review (design "Application review"): details, the uploaded documents, the decision. */
+export function ApplicationReview({ application: a, email, reviewer, onDecide, documentUrl }: ApplicationReviewProps) {
+  const [viewer, setViewer] = useState<Doc | null>(null);
   const pill = applicationPill[a.status];
   const open = a.status === "pending";
-
-  const certificate = (
-    <CertificatePreview council={a.councilName} name={a.fullName} registration={a.registrationNumber} year={a.registrationYear} />
-  );
-  const idCard = <IdCardPreview name={a.fullName} />;
 
   return (
     <>
@@ -81,12 +90,11 @@ export function ApplicationReview({ application: initial, email, reviewer }: App
             <section aria-labelledby="documents">
               <SectionLabel id="documents">Documents</SectionLabel>
               <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,16.875rem),1fr))] gap-3.5">
-                <DocumentCard title="Registration certificate" meta="PDF · 1 page" onOpen={() => setViewer("cert")}>
-                  {certificate}
-                </DocumentCard>
-                <DocumentCard title="ID proof" meta="JPG · front" offset onOpen={() => setViewer("id")}>
-                  {idCard}
-                </DocumentCard>
+                {a.documents.map((doc) => (
+                  <DocumentCard key={doc.fileName} title={kindLabel[doc.kind]} meta={`${fileType(doc.fileName)} · ${doc.fileName}`} onOpen={() => setViewer(doc)}>
+                    <SignedDocument fileName={doc.fileName} load={() => documentUrl(doc)} size="card" />
+                  </DocumentCard>
+                ))}
               </div>
             </section>
           </div>
@@ -97,10 +105,14 @@ export function ApplicationReview({ application: initial, email, reviewer }: App
                 kind="application"
                 subject={a.fullName}
                 person={a.fullName}
-                onDecide={(status, note) => {
+                onDecide={async (status, note) => {
                   if (status === "needs_changes") return;
-                  setA({ ...a, status, reviewNote: note, reviewedAt: new Date().toISOString() });
-                  showToast(`${a.fullName}: ${applicationPill[status].label}`);
+                  try {
+                    await onDecide({ decision: status, note });
+                    showToast(`${a.fullName}: ${applicationPill[status].label}`);
+                  } catch (error) {
+                    showToast(errorMessage(error));
+                  }
                 }}
               />
             ) : (
@@ -113,10 +125,10 @@ export function ApplicationReview({ application: initial, email, reviewer }: App
       <DocumentLightbox
         open={viewer !== null}
         onClose={() => setViewer(null)}
-        title={viewer === "id" ? "ID proof" : "Registration certificate"}
+        title={viewer ? kindLabel[viewer.kind] : ""}
         subtitle={a.fullName}
       >
-        {viewer === "id" ? idCard : certificate}
+        {viewer && <SignedDocument fileName={viewer.fileName} load={() => documentUrl(viewer)} size="full" />}
       </DocumentLightbox>
     </>
   );

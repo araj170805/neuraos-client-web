@@ -1,6 +1,7 @@
 import NextLink from "next/link";
 import { contributionReviewPill, isoDay } from "@/components/admin/adminLabels";
 import { reviewHistory } from "@/components/admin/reviewHistory";
+import { YesNoCell } from "@/components/admin/YesNoCell";
 import { verificationPill } from "@/components/account/statusPills";
 import { Avatar } from "@/components/ui/Avatar";
 import { KeyValueList } from "@/components/ui/KeyValueList";
@@ -10,20 +11,19 @@ import { SectionLabel } from "@/components/ui/SectionLabel";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { Text } from "@/components/ui/Text";
 import { Timeline } from "@/components/ui/Timeline";
-import { Toggle } from "@/components/ui/Toggle";
 import type { AdminApplication, AdminContribution, AdminUser } from "@/lib/contracts/admin";
 
 type UserDrawerBodyProps = {
   user: AdminUser;
   application: AdminApplication | undefined;
   contributions: AdminContribution[];
-  referrals: string[];
-  canContribute: boolean;
-  onCanContribute: (value: boolean) => void;
 };
 
-/** User detail (design "Admin — User detail"): facts, contribute switch, application, contributions, referrals. */
-export function UserDrawerBody({ user, application, contributions, referrals, canContribute, onCanContribute }: UserDrawerBodyProps) {
+/**
+ * User detail (design "Admin — User detail"): facts, whether they can contribute
+ * (set by verification), application, contributions, referral counts.
+ */
+export function UserDrawerBody({ user, application, contributions }: UserDrawerBodyProps) {
   const pill = verificationPill[user.verificationStatus];
   const verified = user.verificationStatus === "approved";
   return (
@@ -60,10 +60,10 @@ export function UserDrawerBody({ user, application, contributions, referrals, ca
             Can contribute
           </Text>
           <Text variant="meta-md" className="mt-0.5 text-muted">
-            {verified ? (canContribute ? "They can submit case studies." : "Paused. They can't submit case studies.") : "Available once they're verified."}
+            {verified ? (user.canContribute ? "They can submit case studies." : "They can't submit case studies.") : "Available once they're verified."}
           </Text>
         </div>
-        <Toggle checked={canContribute} onCheckedChange={onCanContribute} disabled={!verified} aria-labelledby="can-contribute" />
+        <YesNoCell value={user.canContribute} />
       </Panel>
 
       <section aria-labelledby="drawer-application">
@@ -108,20 +108,7 @@ export function UserDrawerBody({ user, application, contributions, referrals, ca
         <SectionLabel as="h3" id="drawer-referrals">
           Referrals · {user.referralCount} signed up · {user.qualifiedReferralCount} active
         </SectionLabel>
-        {referrals.length > 0 ? (
-          <Panel elevation="flat" divided>
-            {referrals.map((name) => (
-              <div key={name} className="flex min-h-13.5 items-center gap-3 px-4 py-2">
-                <Avatar name={name} size="xs" />
-                <Text as="span" variant="body" className="min-w-0 flex-1 truncate">
-                  {name}
-                </Text>
-              </div>
-            ))}
-          </Panel>
-        ) : (
-          <Notice tone="empty">Hasn&apos;t invited anyone yet.</Notice>
-        )}
+        {user.referralCount === 0 && <Notice tone="empty">Hasn&apos;t invited anyone yet.</Notice>}
       </section>
     </>
   );
