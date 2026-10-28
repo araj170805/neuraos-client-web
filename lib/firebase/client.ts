@@ -28,7 +28,7 @@ export function clientAuth(): Auth {
 }
 
 export function clientDb(): Firestore {
-  return getFirestore(firebaseApp());
+  return getFirestore(firebaseApp(), process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID || "(default)");
 }
 
 /**

@@ -67,15 +67,15 @@ design/       Claude Design handoffs, reference only
 
 | | Owns |
 | --- | --- |
-| **Dhruti** (lead) | UI, integration, shared setup |
-| **Dibyanshu** | Chat backend and chat hooks |
-| **Ashish** | Account and admin backend and hooks |
+| **Dhruti** (lead) | Setup, account/admin hooks, review, release |
+| **Dibyanshu** | AI chat backend, chat hooks, chat screen integration |
+| **Ashish** | Uploads, groups, upload/group/account/admin integration |
 
-Work happens in forks; PRs go into `alpha-launch` on NeuraDataHealth/neuraos-client-web.
+Work happens in forks; PRs go into `alpha-launch` on swaindhruti/neuraos-client-web.
 
 ```bash
 git clone <your fork URL> && cd neuraos-client-web
-git remote add upstream https://github.com/NeuraDataHealth/neuraos-client-web.git
+git remote add upstream https://github.com/swaindhruti/neuraos-client-web.git
 git fetch upstream && git checkout -b alpha-launch upstream/alpha-launch
 ```
 

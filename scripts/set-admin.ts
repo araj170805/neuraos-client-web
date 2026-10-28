@@ -16,7 +16,7 @@ const app =
       });
 
 const auth = getAuth(app);
-const db = getFirestore(app);
+const db = getFirestore(app, process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID || "(default)");
 
 async function main() {
   const email = process.argv[2]?.trim();

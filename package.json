@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "check:setup": "bun scripts/check-setup.ts",
+    "seed:config": "bun scripts/seed-config.ts",
+    "set-admin": "bun scripts/set-admin.ts"
   },
   "dependencies": {
     "@google/genai": "^2.31.0",

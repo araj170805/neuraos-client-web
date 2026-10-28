@@ -405,7 +405,7 @@ Teammates have no Google Cloud access. Local development uses only emulators and
 
 ## 14. Repo, branches and deployment
 
-- Company repo: `NeuraDataHealth/neuraos-client-web`. Working branch: **`alpha-launch`** (default branch during the sprint, protected).
+- Alpha repo: `swaindhruti/neuraos-client-web`, branch **`alpha-launch`** (deployed from here; the company repo `NeuraDataHealth/neuraos-client-web` gets it later).
 - Landing page moves to `app/(marketing)/` unchanged; the app lives in `app/(app)/` and `app/admin/`.
 - Feature branches: `feat/<track>-<short-name>` from `alpha-launch`; PR into `alpha-launch`; CI runs lint and typecheck; the lead tests locally and squash-merges.
 - After launch, `alpha-launch` merges into `main`.

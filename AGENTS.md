@@ -35,15 +35,17 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Team
 
-`docs/SPEC.md` is the source of truth; `docs/TASKS.md` is each person's checklist. Work happens in forks; PRs go into `alpha-launch` on NeuraDataHealth/neuraos-client-web.
+`docs/SPEC.md` is the source of truth; `docs/TASKS.md` is each person's checklist. Work happens in forks; PRs go into `alpha-launch` on swaindhruti/neuraos-client-web (the company repo is not used for the alpha).
 
-Split: Dhruti builds all UI from the Claude Design handoffs (`design/`), then integrates and tests. Dibyanshu builds the chat backend and chat data hooks. Ashish builds the account and admin backend and their data hooks.
+Split (from 28 Oct): Dhruti does setup, account/admin hooks (A1), review and release. Dibyanshu builds the AI chat (C1), chat hooks (C4) and integrates the chat screens. Ashish builds uploads (C2) and groups (C3) and integrates the upload UI, group UI, account and admin pages.
 
 ## Ownership
-- **Dhruti (UI, integration):** app/(app)/**/page.tsx and layout.tsx, app/admin/**/page.tsx and layout.tsx, app/join/**, app/sign-in/**, app/(marketing)/**, components/**, styles/**, app/globals.css, design/**, lib/fixtures/**, hooks/useAuth.ts, lib/server/http/**, lib/server/env.ts, lib/firebase/**, lib/api/**, package.json, bun.lock, AGENTS.md, docs/**
-- **Dibyanshu (chat backend):** app/api/chats/**, app/api/join/**, app/api/files/**, lib/server/chat/**, lib/server/files/**, lib/server/ai/**, lib/contracts/{chats,messages,files,groups}.ts, hooks/chat/**
-- **Ashish (account and admin backend):** app/api/onboarding/**, app/api/verification/**, app/api/contributions/**, app/api/admin/**, lib/server/account/**, lib/server/admin/**, lib/contracts/{onboarding,verification,contributions,admin}.ts, hooks/account/**, hooks/admin/**, scripts/**, firestore.indexes.json, firebase.json
-- **Shared, change by PR with a note:** lib/types.ts (additive changes only), lib/limits.ts, lib/contracts/{common,errors}.ts, firestore.rules, storage.rules.
+- **Dhruti (setup, A1, review):** hooks/account/**, hooks/admin/**, hooks/useAuth.ts, lib/server/http/**, lib/server/env.ts, lib/firebase/**, lib/api/**, lib/fixtures/**, app/(marketing)/**, components/ui/**, styles/**, app/globals.css, design/**, scripts/**, apphosting.yaml, firebase.json, .firebaserc, package.json, bun.lock, AGENTS.md, docs/**
+- **Dibyanshu (AI chat):** app/api/chats/route.ts, app/api/chats/[chatId]/messages/**, lib/server/chat/**, lib/server/ai/**, lib/contracts/{chats,messages}.ts, hooks/chat/** except the three files Ashish owns. Integration: app/(app)/layout.tsx, app/(app)/chat/**, components/chat/** except the upload files below.
+- **Ashish (uploads, groups, account/admin integration):** app/api/chats/[chatId]/files/**, app/api/chats/[chatId]/{convert,invite,leave,members}/**, app/api/files/**, app/api/join/**, lib/server/files/**, lib/server/groups/**, lib/contracts/{files,groups}.ts, hooks/chat/{useUpload,useGroupActions,useJoin}.ts, and his merged routes (app/api/{onboarding,profile,verification,contributions,admin}/**, lib/server/{account,admin}/**, lib/contracts/{onboarding,verification,contributions,admin}.ts). Integration: components/chat/{AttachButton,AttachmentChips,CaseFiles,FileChip,usePendingUploads,fileFormat}.*, components/groups/**, components/account/**, components/admin/**, app/join/**, app/sign-in/**, app/(app)/{profile,verify,contribute}/**, app/admin/**.
+- **Integration owners may edit the page and component files listed for their area.** `ChatScreen.tsx` and `Composer.tsx` belong to Dibyanshu; Ashish wires uploads into them only after telling him, in a separate small PR.
+- **Shared, change by PR with a note:** lib/types.ts (additive changes only), lib/limits.ts, lib/contracts/{common,errors}.ts, firestore.rules, storage.rules, firestore.indexes.json.
+- All chat API routes use the dynamic segment `[chatId]` (Next.js needs one name per level).
 - You may import from another person's files, but don't edit them.
 
 ## Design handoffs
@@ -61,11 +63,11 @@ Split: Dhruti builds all UI from the Claude Design handoffs (`design/`), then in
 - Fictional data only (seeds, fixtures, tests), never real patient details. Never log message text, transcripts, file contents or contribution text.
 
 ## Git workflow
-- `origin` = your own fork; `upstream` = NeuraDataHealth/neuraos-client-web.
+- `origin` = your own fork; `upstream` = swaindhruti/neuraos-client-web.
 - Start each task: `git fetch upstream && git checkout -b feat/<name>-<task> upstream/alpha-launch`
 - Before pushing: `bun run lint`, `bun run typecheck`, `git fetch upstream`, `git rebase upstream/alpha-launch`
 - Push to your fork: `git push -u origin feat/<name>-<task>`
-- Open a PR from your fork's branch into NeuraDataHealth/neuraos-client-web : `alpha-launch`. Title "[name] what it does". One task per PR, keep it small.
+- Open a PR from your fork's branch into swaindhruti/neuraos-client-web : `alpha-launch`. Title "[name] what it does". One task per PR, keep it small.
 - Only touch files you own. Shared files change only in their own PR with a note; a PR that edits someone else's files or package.json gets sent back.
 - Need a new field, route, limit or package? Ask Dhruti.
 - Agents never push or open PRs on their own; the person does.

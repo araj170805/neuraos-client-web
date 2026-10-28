@@ -29,7 +29,7 @@ export function adminAppCheck(): AppCheck {
 }
 
 export function adminDb(): Firestore {
-  return getFirestore(adminApp());
+  return getFirestore(adminApp(), requireEnv("NEXT_PUBLIC_FIRESTORE_DATABASE_ID"));
 }
 
 /** The default bucket (chat files, verification documents, contribution audio). */
