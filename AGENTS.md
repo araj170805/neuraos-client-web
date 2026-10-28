@@ -37,14 +37,14 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 `docs/SPEC.md` is the source of truth; `docs/TASKS.md` is each person's checklist. Work happens in forks; PRs go into `alpha-launch` on swaindhruti/neuraos-client-web (the company repo is not used for the alpha).
 
-Split (from 28 Oct): Dhruti does setup, account/admin hooks (A1), review and release. Dibyanshu builds the AI chat (C1), chat hooks (C4) and integrates the chat screens. Ashish builds uploads (C2) and groups (C3) and integrates the upload UI, group UI, account and admin pages.
+Split (from 28 Oct, second re-split): Ashish builds the AI chat end to end (C1 backend, C4 hooks, chat integration). Dibyanshu builds uploads (C2) and groups (C3) end to end, closes the admin gaps and owns release readiness. Dhruti only reviews PRs, verifies end to end and deploys. Account and admin are already live on real data.
 
 ## Ownership
-- **Dhruti (setup, A1, review):** hooks/account/**, hooks/admin/**, hooks/firestore/** (shared `useDocument` / `useCollection` listeners; use them in hooks/chat too), hooks/useAuth.ts, lib/server/http/**, lib/server/env.ts, lib/firebase/**, lib/api/**, lib/fixtures/**, app/(marketing)/**, components/ui/**, styles/**, app/globals.css, design/**, scripts/**, apphosting.yaml, firebase.json, .firebaserc, package.json, bun.lock, AGENTS.md, docs/**
-- **Dibyanshu (AI chat):** app/api/chats/route.ts, app/api/chats/[chatId]/messages/**, lib/server/chat/**, lib/server/ai/**, lib/contracts/{chats,messages}.ts, hooks/chat/** except the three files Ashish owns. Integration: app/(app)/layout.tsx, app/(app)/chat/**, components/chat/** except the upload files below.
-- **Ashish (uploads, groups, account/admin integration):** app/api/chats/[chatId]/files/**, app/api/chats/[chatId]/{convert,invite,leave,members}/**, app/api/files/**, app/api/join/**, lib/server/files/**, lib/server/groups/**, lib/contracts/{files,groups}.ts, hooks/chat/{useUpload,useGroupActions,useJoin}.ts, and his merged routes (app/api/{onboarding,profile,verification,contributions,admin}/**, lib/server/{account,admin}/**, lib/contracts/{onboarding,verification,contributions,admin}.ts). Integration: components/chat/{AttachButton,AttachmentChips,CaseFiles,FileChip,usePendingUploads,fileFormat}.*, components/groups/**, components/account/**, components/admin/**, app/join/**, app/sign-in/**, app/(app)/{profile,verify,contribute}/**, app/admin/**.
-- **Integration owners may edit the page and component files listed for their area.** `ChatScreen.tsx` and `Composer.tsx` belong to Dibyanshu; Ashish wires uploads into them only after telling him, in a separate small PR.
-- **Shared, change by PR with a note:** lib/types.ts (additive changes only), lib/limits.ts, lib/contracts/{common,errors}.ts, firestore.rules, storage.rules, firestore.indexes.json.
+- **Ashish (AI chat, account, admin):** app/api/chats/route.ts, app/api/chats/[chatId]/messages/**, lib/server/chat/**, lib/server/ai/**, lib/contracts/{chats,messages}.ts, hooks/chat/** except useUpload, useGroupActions and useJoin; app/(app)/layout.tsx, app/(app)/chat/**, components/chat/** except the upload files below. Plus account and admin: app/api/{onboarding,profile,verification,contributions,admin}/** (except the two admin routes Dibyanshu adds), lib/server/{account,admin}/**, lib/contracts/{onboarding,verification,contributions,admin}.ts, hooks/account/**, hooks/admin/**, components/account/**, components/admin/**, app/(app)/{profile,verify,contribute}/**, app/admin/**, app/sign-in/**.
+- **Dibyanshu (uploads, groups, gaps, release readiness):** app/api/chats/[chatId]/{files,convert,invite,leave,members}/**, app/api/files/**, app/api/join/**, app/api/admin/spend/**, the new admin route that sets a user's canContribute, lib/server/{files,groups}/**, lib/contracts/{files,groups}.ts, hooks/chat/{useUpload,useGroupActions,useJoin}.ts, components/chat/{AttachButton,AttachmentChips,CaseFiles,FileChip,usePendingUploads,fileFormat}.*, components/groups/**, app/join/**, firestore.indexes.json, apphosting.yaml.
+- **Cross-area edits:** `ChatScreen.tsx` and `Composer.tsx` belong to Ashish; Dibyanshu wires uploads and group actions into them only after agreeing with him, in a separate small PR after his chat integration lands. For the admin gaps, Dibyanshu adds the contracts to lib/contracts/admin.ts and wires SpendCard, Settings and the user drawer in small PRs with a note to Ashish.
+- **Dhruti (review, verify, deploy):** AGENTS.md, docs/** (each person ticks only their own section of TASKS.md), scripts/**, firebase.json, .firebaserc, app/(marketing)/**, app/globals.css, design/**.
+- **Shared, small PR with a note only:** lib/types.ts (additive), lib/limits.ts, lib/contracts/{common,errors}.ts, lib/api/**, lib/firebase/**, lib/server/http/**, hooks/firestore/**, components/ui/**, styles/**, lib/fixtures/** (removing fixtures your area no longer uses is fine), firestore.rules, storage.rules, package.json, bun.lock.
 - All chat API routes use the dynamic segment `[chatId]` (Next.js needs one name per level).
 - You may import from another person's files, but don't edit them.
 
@@ -58,7 +58,7 @@ Split (from 28 Oct): Dhruti does setup, account/admin hooks (A1), review and rel
 - Hooks return data typed with `lib/types.ts` and `lib/contracts`; UI components take those same types as props. This is how the UI and backend meet at integration.
 - Hooks read Firestore with `lib/firebase/client.ts` and never write to it; writes go through `lib/api/client.ts`. The user comes from `useAuth()`.
 - Pages read data in a small client container (`*Container.tsx`) that calls the hooks and passes their results to the screen. Account and admin pages are live; chat and join pages still read `lib/fixtures/` (open them without sign-in with `NEXT_PUBLIC_UI_PREVIEW=true`, dev only) until their hooks land. `docs/TASKS.md` maps each hook to the UI props it must feed.
-- Need a package? Ask Dhruti.
+- Need a package? Add it in a small shared PR with a note; Dhruti reviews it.
 - Never commit .env files or keys.
 - Fictional data only (seeds, fixtures, tests), never real patient details. Never log message text, transcripts, file contents or contribution text.
 
@@ -68,6 +68,6 @@ Split (from 28 Oct): Dhruti does setup, account/admin hooks (A1), review and rel
 - Before pushing: `bun run lint`, `bun run typecheck`, `git fetch upstream`, `git rebase upstream/alpha-launch`
 - Push to your fork: `git push -u origin feat/<name>-<task>`
 - Open a PR from your fork's branch into swaindhruti/neuraos-client-web : `alpha-launch`. Title "[name] what it does". One task per PR, keep it small.
-- Only touch files you own. Shared files change only in their own PR with a note; a PR that edits someone else's files or package.json gets sent back.
-- Need a new field, route, limit or package? Ask Dhruti.
-- Agents never push or open PRs on their own; the person does.
+- Only touch files you own. Shared files change only in their own small PR with a note; a PR that edits someone else's files, or a shared file without a note, gets sent back.
+- Need a new field, route, limit or package? Open a small PR with a note; Dhruti reviews it.
+- Agents never push or open PRs on their own; the person does. Dhruti reviews every PR.

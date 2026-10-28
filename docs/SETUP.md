@@ -11,29 +11,36 @@ Cloud commands run in **Cloud Shell** (Google Cloud console, `>_` icon), never o
 - [x] Budget alerts
 - [x] Repo: `.env.local`, key in `.secrets/` (both gitignored), database id `neuraos` wired in
 
-## Now: the config document
-Firebase console → Firestore → database **neuraos** → **Data** → **Start collection**
+## Before any local testing (once, in this order)
+Nothing reads correctly until these three are done: a new database denies every read, the app expects `config/app`, and the account and admin queries need composite indexes.
 
-- Collection ID: `config`
-- Document ID: `app`
-
-| Field | Type | Value |
-| --- | --- | --- |
-| `aiEnabled` | boolean | `true` |
-| `groupsEnabled` | boolean | `false` (turn on when groups are merged and tested) |
-| `contributionsEnabled` | boolean | `true` |
-| `dailySpendCapUsd` | number | `15` |
-
-Same result without the console: `bun run seed:config` in the repo (uses `.env.local`).
-
-## After Dibyanshu's and Ashish's work is merged and integrated
-1. **Rules.** Firebase console:
+1. **Publish the rules.** Firebase console:
    - Firestore → database **neuraos** → **Rules** → paste `firestore.rules` → **Publish**
    - Storage → **Rules** → paste `storage.rules` → **Publish**
-2. **Local test** (`bun run dev`):
-   - Sign in with Google once, then run `bun run set-admin dhrutinandan.dev@gmail.com`, sign out and back in.
-   - If a page errors with "The query requires an index", open the link in the error and click **Create**. Wait about a minute.
-   - Run the launch criteria in `docs/SPEC.md` section 1.
+2. **Create the config document:** `bun run seed:config` in the repo (uses `.env.local`). Or by hand: Firestore → **neuraos** → **Data** → collection `config`, document `app`:
+
+   | Field | Type | Value |
+   | --- | --- | --- |
+   | `aiEnabled` | boolean | `true` |
+   | `groupsEnabled` | boolean | `false` (turn on when groups are merged and tested) |
+   | `contributionsEnabled` | boolean | `true` |
+   | `dailySpendCapUsd` | number | `15` |
+
+3. **Create the 4 composite indexes** (same as `firestore.indexes.json`). Firestore → database **neuraos** → **Indexes** → **Composite** → **Create index**, scope *Collection*:
+
+   | Collection | Field 1 | Field 2 |
+   | --- | --- | --- |
+   | `verificationApplications` | `status` Ascending | `submittedAt` Descending |
+   | `contributions` | `status` Ascending | `submittedAt` Descending |
+   | `contributions` | `contributorUid` Ascending | `createdAt` Descending |
+   | `chats` | `memberIds` Arrays | `lastMessageAt` Descending |
+
+   Each takes a few minutes to build. A query that still lacks an index fails with "The query requires an index": browser queries log the create link in the browser console, server queries (admin lists) in the `bun run dev` terminal. Add any new index to `firestore.indexes.json` too.
+
+## Local test
+Setup per machine: README "Local setup with real Firebase". Then `bun run dev`:
+- Sign in with Google once, run `bun run set-admin <your-email>`, sign out and back in.
+- Run the launch criteria in `docs/SPEC.md` section 1 and the checklists in section 16.
 
 ## Deploy (after local testing passes)
 1. **apphosting.yaml** in the repo with all env values from `.env.local` except `GOOGLE_APPLICATION_CREDENTIALS`. Push `alpha-launch` to origin.

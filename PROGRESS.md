@@ -153,9 +153,9 @@ Source: Claude Design project "NeuraOS AI app mockups", saved as reference in `d
 
 ## Next
 
-1. Test sign-in, profile, verify, case studies and admin against the real project (`bun run set-admin <email>` for admin).
-2. Chat (Dibyanshu C1/C4) and uploads/groups (Ashish C2/C3); then wire the chat and join pages, which still read fixtures.
-3. Deploy per `docs/SETUP.md`. Landing: final responsive / a11y / reduced-motion pass.
+1. Ashish: AI chat end to end (C1 → C4 → chat integration, "Solo chat" checks). Dibyanshu: uploads, groups, admin gaps (spend, canContribute), release readiness. Split and ownership: `docs/TASKS.md`, `AGENTS.md` (re-split 2026-10-28).
+2. Dhruti: review and merge PRs, verify SPEC.md section 1 end to end, deploy per `docs/SETUP.md` (rules, config and indexes first).
+3. Landing (still open): final responsive / a11y / reduced-motion pass.
 
 ## Decisions
 

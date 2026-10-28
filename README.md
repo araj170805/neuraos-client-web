@@ -35,21 +35,36 @@ Browser ── API calls (Firebase ID token) ──► Next.js routes ──► 
 - **Every chat is a group.** A solo chat is a group of one: one model, one API, one UI.
 - **No socket server.** The server streams tokens into Firestore and listeners show them live.
 
-## Quick start
+## Local setup with real Firebase
 
-```bash
-bun install
-cp .env.example .env.local     # values come from Dhruti
-bun run dev
-```
+1. Fork [swaindhruti/neuraos-client-web](https://github.com/swaindhruti/neuraos-client-web), clone your fork, add upstream, check out `alpha-launch` from upstream, install:
 
-Profile, verification, case studies and admin run on real data. Chat and join pages still use fixture data until the chat backend lands; `NEXT_PUBLIC_UI_PREVIEW=true` in `.env.local` (dev only) opens those without sign-in.
+   ```bash
+   git clone <your fork URL> && cd neuraos-client-web
+   git remote add upstream https://github.com/swaindhruti/neuraos-client-web.git
+   git fetch upstream && git checkout -b alpha-launch upstream/alpha-launch
+   bun install
+   ```
+
+2. Put the `.env.local` Dhruti sends in the repo root and the service account JSON in `.secrets/` (both gitignored).
+3. In `.env.local`, set `GOOGLE_APPLICATION_CREDENTIALS` to the absolute path of that JSON on your machine.
+4. `bun run check:setup`: all four checks pass.
+5. `bun run dev`, open [localhost:3000](http://localhost:3000), sign in with Google once.
+6. Make yourself admin: `bun run set-admin <your-email>`, then sign out and back in.
+7. Never commit `.env.local` or `.secrets/`, and never paste the key anywhere.
+
+Then tell your coding agent: *"I'm &lt;name&gt;. Read AGENTS.md and docs/TASKS.md and start my next task."*
+
+Profile, verification, case studies and admin run on real data. Chat and join pages still use fixture data until their backend lands; `NEXT_PUBLIC_UI_PREVIEW=true` in `.env.local` (dev only) opens those without sign-in. Project-level setup (rules, config, indexes, deploy) is in [`docs/SETUP.md`](docs/SETUP.md).
 
 | Command | |
 | --- | --- |
 | `bun run dev` | Start the app |
 | `bun run lint` | ESLint |
 | `bun run typecheck` | Route types + `tsc` |
+| `bun run check:setup` | Check Firestore, Storage, signed URLs and Gemini |
+| `bun run seed:config` | Create `config/app` |
+| `bun run set-admin <email>` | Give an account the admin claim |
 
 ## Project layout
 
@@ -67,18 +82,8 @@ design/       Claude Design handoffs, reference only
 
 | | Owns |
 | --- | --- |
-| **Dhruti** (lead) | Setup, account/admin hooks, review, release |
-| **Dibyanshu** | AI chat backend, chat hooks, chat screen integration |
-| **Ashish** | Uploads, groups, upload/group/account/admin integration |
+| **Ashish** | AI chat end to end (backend, hooks, chat screens), plus account and admin |
+| **Dibyanshu** | Uploads and groups end to end, admin gaps, release readiness |
+| **Dhruti** (lead) | Reviews every PR, verifies end to end, deploys |
 
-Work happens in forks; PRs go into `alpha-launch` on swaindhruti/neuraos-client-web.
-
-```bash
-git clone <your fork URL> && cd neuraos-client-web
-git remote add upstream https://github.com/swaindhruti/neuraos-client-web.git
-git fetch upstream && git checkout -b alpha-launch upstream/alpha-launch
-```
-
-Then tell your coding agent: *"I'm &lt;name&gt;. Read AGENTS.md and docs/TASKS.md and start my next task."*
-
-Ownership, branch names and PR rules: [`AGENTS.md`](AGENTS.md) · Spec: [`docs/SPEC.md`](docs/SPEC.md) · Tasks: [`docs/TASKS.md`](docs/TASKS.md)
+Work happens in forks; PRs go into `alpha-launch` on swaindhruti/neuraos-client-web. Ownership, branch names and PR rules: [`AGENTS.md`](AGENTS.md) · Spec: [`docs/SPEC.md`](docs/SPEC.md) · Tasks: [`docs/TASKS.md`](docs/TASKS.md) · Setup: [`docs/SETUP.md`](docs/SETUP.md)
