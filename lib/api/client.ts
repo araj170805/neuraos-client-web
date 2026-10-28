@@ -24,6 +24,13 @@ export const api = {
       }),
   },
 
+  profile: {
+    update: (body: onboarding.UpdateProfileRequest) =>
+      call("PATCH", p("profile"), onboarding.updateProfileResponseSchema, {
+        body: v(onboarding.updateProfileRequestSchema, body),
+      }),
+  },
+
   chats: {
     create: (body: chats.CreateChatRequest) =>
       call("POST", p("chats"), chats.createChatResponseSchema, {
@@ -132,6 +139,12 @@ export const api = {
       call("GET", p("admin", "audit-logs"), admin.listAuditLogsResponseSchema, {
         query: v(admin.listAuditLogsQuerySchema, query),
       }),
+    applicationDocumentUrl: (id: string, query: admin.ApplicationDocumentUrlQuery) =>
+      call("GET", p("admin", "applications", id, "document-url"), admin.adminDownloadUrlResponseSchema, {
+        query: v(admin.applicationDocumentUrlQuerySchema, query),
+      }),
+    contributionAudioUrl: (id: string) =>
+      call("GET", p("admin", "contributions", id, "audio-url"), admin.adminDownloadUrlResponseSchema),
     updateConfig: (body: admin.UpdateConfigRequest) =>
       call("PATCH", p("admin", "config"), admin.updateConfigResponseSchema, {
         body: v(admin.updateConfigRequestSchema, body),
