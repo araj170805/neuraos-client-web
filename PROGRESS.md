@@ -144,10 +144,18 @@ Source: Claude Design project "NeuraOS AI app mockups", saved as reference in `d
 - `/admin/settings`: feature switches, daily cap (validated with the config schema), today's spend meter (amber ≥ 80 %, red at cap); Save in the top bar.
 - Shared: key looks `app-danger-lg`, `app-dark-lg`; text variants `stat-label`, `doc-*` (mock document previews).
 
+### Real data for account and admin (2026-10-28)
+- Firebase project `neuraos` connected (named database, `apphosting.yaml`, `docs/SETUP.md`, `check:setup` / `seed:config` / `set-admin`). Ashish's account and admin routes merged.
+- P1: landing "Try it" opens `/chat` (→ Google sign-in); `AuthProvider` runs `POST /api/onboarding` once per page load; Sign out on profile and in the admin sidebar. Fixture timestamps (functions) can't cross into Client Components, so pages read data in client `*Container.tsx` files.
+- P2 (A1): `hooks/firestore/{useDocument,useCollection}`, `hooks/account/*`, `hooks/admin/*` (lists load every status via the API; a decision refetches all admin lists).
+- P3: profile save, verification uploads + submit, case-study drafts, voice recording → upload → transcription, submit through the server PII check (`useCaseStudyDraft`). Static PII check and sample transcript removed.
+- P4: admin overview, queues, reviews (signed document / audio links in `SignedDocument` and `VoicePlayer`), decisions, users, settings, audit log. Mock certificate / ID previews and admin fixtures removed.
+
 ## Next
 
-1. Wait for Dibyanshu (chat backend + hooks) and Ashish (account / admin backend + hooks), then I1: swap fixtures for hooks page by page (map in docs/TASKS.md), onboarding after sign-in, end-to-end test, deploy.
-2. Landing (still open): final responsive / a11y / reduced-motion pass.
+1. Test sign-in, profile, verify, case studies and admin against the real project (`bun run set-admin <email>` for admin).
+2. Chat (Dibyanshu C1/C4) and uploads/groups (Ashish C2/C3); then wire the chat and join pages, which still read fixtures.
+3. Deploy per `docs/SETUP.md`. Landing: final responsive / a11y / reduced-motion pass.
 
 ## Decisions
 
