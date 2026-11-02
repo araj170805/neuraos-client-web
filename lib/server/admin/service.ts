@@ -1,5 +1,5 @@
 import "server-only";
-import { FieldValue, type Timestamp } from "firebase-admin/firestore";
+import { FieldValue, type QueryDocumentSnapshot, type Timestamp } from "firebase-admin/firestore";
 import { adminBucket, adminDb } from "@/lib/firebase/admin";
 import type {
   AdminApplication,
@@ -76,12 +76,32 @@ export async function listAdminApplications(
     }
   }
 
-  const snap = await q.get();
-  const hasMore = snap.docs.length > limit;
-  const docs = hasMore ? snap.docs.slice(0, limit) : snap.docs;
-  const nextCursor = hasMore && docs.length > 0 ? docs[docs.length - 1].id : null;
+  let docs: QueryDocumentSnapshot[];
+  try {
+    const snap = await q.get();
+    docs = snap.docs;
+  } catch (err: unknown) {
+    const error = err as { code?: number; message?: string } | null;
+    if (error?.code === 9 || error?.message?.includes("index")) {
+      const fallbackSnap = await db
+        .collection("verificationApplications")
+        .where("status", "==", query.status)
+        .get();
+      const sortedDocs = [...fallbackSnap.docs].sort((a, b) => {
+        const aTime = (a.data() as VerificationApplicationDoc).submittedAt?.toMillis?.() ?? 0;
+        const bTime = (b.data() as VerificationApplicationDoc).submittedAt?.toMillis?.() ?? 0;
+        return bTime - aTime;
+      });
+      docs = sortedDocs.slice(0, limit + 1);
+    } else {
+      throw err;
+    }
+  }
+  const hasMore = docs.length > limit;
+  const pagedDocs = hasMore ? docs.slice(0, limit) : docs;
+  const nextCursor = hasMore && pagedDocs.length > 0 ? pagedDocs[pagedDocs.length - 1].id : null;
 
-  const items: AdminApplication[] = docs.map((docSnap) => {
+  const items: AdminApplication[] = pagedDocs.map((docSnap) => {
     const data = docSnap.data() as VerificationApplicationDoc;
     return {
       id: docSnap.id,
@@ -209,13 +229,33 @@ export async function listAdminContributions(
     }
   }
 
-  const snap = await q.get();
-  const hasMore = snap.docs.length > limit;
-  const docs = hasMore ? snap.docs.slice(0, limit) : snap.docs;
-  const nextCursor = hasMore && docs.length > 0 ? docs[docs.length - 1].id : null;
+  let docs: QueryDocumentSnapshot[];
+  try {
+    const snap = await q.get();
+    docs = snap.docs;
+  } catch (err: unknown) {
+    const error = err as { code?: number; message?: string } | null;
+    if (error?.code === 9 || error?.message?.includes("index")) {
+      const fallbackSnap = await db
+        .collection("contributions")
+        .where("status", "==", query.status)
+        .get();
+      const sortedDocs = [...fallbackSnap.docs].sort((a, b) => {
+        const aTime = (a.data() as ContributionDoc).submittedAt?.toMillis?.() ?? 0;
+        const bTime = (b.data() as ContributionDoc).submittedAt?.toMillis?.() ?? 0;
+        return bTime - aTime;
+      });
+      docs = sortedDocs.slice(0, limit + 1);
+    } else {
+      throw err;
+    }
+  }
+  const hasMore = docs.length > limit;
+  const pagedDocs = hasMore ? docs.slice(0, limit) : docs;
+  const nextCursor = hasMore && pagedDocs.length > 0 ? pagedDocs[pagedDocs.length - 1].id : null;
 
   // Batch-fetch contributor names from users collection
-  const contributorUids = [...new Set(docs.map((d) => (d.data() as ContributionDoc).contributorUid))];
+  const contributorUids = [...new Set(pagedDocs.map((d) => (d.data() as ContributionDoc).contributorUid))];
   const userSnaps = await Promise.all(contributorUids.map((uid) => db.doc(`users/${uid}`).get()));
   const nameMap = new Map<string, string>();
   for (const s of userSnaps) {
